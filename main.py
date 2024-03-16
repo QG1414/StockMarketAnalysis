@@ -8,37 +8,59 @@ external_stylesheets = [dbc.themes.CERULEAN]
 app=Dash(__name__, external_stylesheets=external_stylesheets)
 
 colors ={
-    'background':'#19181A',
-    'text':'#B19F9E'
+    'bg':'#111111',
+    'text':'#FFFFFF',
+    'text2':'#AAAAAA',
+    'chart':'#7B5668',
+    'chart2':'#3E5077'
 }
 
-app.layout=dbc.Container(style={'backgroundColor':colors['background'],'height':'100vh','overflow':'auto'},children=[
+app.layout=dbc.Container(children=[
     dbc.Row([
          html.Div(
-        children='Data Stock Analysis',
-        className="text-primary text-center fs-3"
+        children='Data Stock Analysis📊',
+        className="font-weight-bold text-center display-2 p-3",
+        style={
+            'color': colors['text'],
+            'background-color': colors['bg']
+        }
             )
+    ]),
+    dbc.Row([
+        html.Hr(
+            style={
+                'color': colors['text']
+            }
+        )
     ]),
     dbc.Row([
             dcc.Dropdown(
                 id='dropdown',
                 options=[
-                    {'label':x,'value':x} for x in ['long','lat','cnt']
+                    {'label': html.Span(x,style={'color': colors['text2']}),'value':x} for x in ['long','lat','cnt']
                 ],
-                value='long'
+                value='long',
+                className='pt-5 w-25 mx-auto',
+                style={'background-color': colors['bg'],'color': colors['text']}
             )
         ]
     ),
        dbc.Row([
-               dcc.Graph(figure={}, id='graph')
+               dcc.Graph( id='graph',figure={})
         ])
-])
+],fluid=True,style={'background-color': colors['bg'],'overflow': 'auto','height':'100vh'})
 @callback(
     Output(component_id='graph',component_property='figure'),
     Input(component_id='dropdown',component_property='value')
 )
 def update_graph(col_chosen):
-    figure= px.histogram(df,x='city',y=col_chosen)
+    figure= px.bar(df,x='city',y=col_chosen,color='city',template= 'plotly_dark',title='place for chart title')
+    figure.update_layout(
+        font_family='Courier New',
+        font_size=13,
+        title_font_family="Times New Roman",
+        title_font_size=20
+    )
     return figure
 
 if __name__ == '__main__':
