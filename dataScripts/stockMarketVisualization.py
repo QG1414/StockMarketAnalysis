@@ -40,3 +40,12 @@ class StockMarketData:
         company_data = pd.DataFrame(yf.download(ticket))
         company_data.reset_index(inplace=True)
         return company_data
+    
+    def get_averages(self, companyData:pd.DataFrame) -> pd.DataFrame:
+        companyData['MA10'] = companyData['Close'].rolling(window=10).mean().reset_index(0, drop=True)
+        companyData['MA20'] = companyData['Close'].rolling(window=20).mean().reset_index(0, drop=True)
+        return companyData
+    
+    def get_volatility(self, companyData:pd.DataFrame) -> pd.DataFrame:
+        companyData['Volatility'] = companyData['Close'].pct_change().rolling(window=10).std().reset_index(0, drop=True)
+        return companyData
