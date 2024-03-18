@@ -189,9 +189,10 @@ def update_graph(company_choosen : str,n):
                     xanchor="auto",
                     borderwidth=1,
                     font=dict(
-                        color="red",
+                        color="white",
                         size=20
-                    )
+                    ),
+                    bgcolor="#322485"
                 ),
                 rangeslider=dict(
                     visible=False
