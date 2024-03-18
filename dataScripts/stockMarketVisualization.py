@@ -37,9 +37,13 @@ class StockMarketData:
         return self.__tickers_data
     
     def get_company(self, ticket:str) -> pd.DataFrame:
-        company_data = pd.DataFrame(yf.download(ticket))
-        company_data.reset_index(inplace=True)
-        return company_data
+        print(ticket)
+        try:
+            company_data = pd.DataFrame(yf.download(ticket))
+            company_data.reset_index(inplace=True)
+            return company_data
+        except:
+            return pd.DataFrame()
     
     @staticmethod
     def get_averages(companyData:pd.DataFrame) -> pd.DataFrame:

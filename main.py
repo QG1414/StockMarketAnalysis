@@ -1,11 +1,12 @@
-from dash import Dash,html,dcc, callback, Output, Input, ctx
+from dash import Dash,html,dcc, callback, Output, Input, ctx, State
+from dash.exceptions import PreventUpdate
 import plotly_express as px
 import dash_bootstrap_components as dbc
 from ChangeGraphs import ChangeGraphs
 from dataScripts.stockMarketVisualization import StockMarketData
 from correlationGraph import CorrelationGraph
 import plotly.io as pio
-
+import pandas as pd
 
 pio.templates.default = "plotly_dark"
 external_stylesheets = [dbc.themes.CERULEAN]
@@ -46,7 +47,6 @@ app.layout=dbc.Container(children=[
             dcc.Dropdown(
                 df_tickers["Symbol"] + " - " + df_tickers["FullName"],
                 id='dropdown',
-                value='A - "Agilent Technologies, Inc."',
                 className='pt-5 w-25 mx-auto',
                 style={'background-color': colors['bg'],'color': colors["text2"]}
             )
@@ -59,7 +59,8 @@ app.layout=dbc.Container(children=[
         ],className="w-100 d-flex flex-row-reverse"),
        dbc.Row([
                dcc.Graph( id='graph',figure={"layout":{
-                   "template":"plotly_dark"
+                   "template":"plotly_dark",
+                   'overflowX': 'scroll'
                }})
         ]),
     
@@ -86,8 +87,7 @@ app.layout=dbc.Container(children=[
             dcc.Dropdown(
                 df_tickers["Symbol"] + " - " + df_tickers["FullName"],
                 id='correlation_dropdown',
-                value='MSFT - "Microsoft Corporation"',
-                className='pt-5 w-25 mx-auto',
+                className='pt-5 w-50 mx-auto',
                 style={'background-color': colors['bg'],'color': colors["text2"]}
             )
             ),
@@ -95,8 +95,7 @@ app.layout=dbc.Container(children=[
             dcc.Dropdown(
                 df_tickers["Symbol"] + " - " + df_tickers["FullName"],
                 id='correlation2_dropdown',
-                value='AAPL - "Apple, Inc."',
-                className='pt-5 w-25 mx-auto',
+                className='pt-5 w-50 mx-auto',
                 style={'background-color': colors['bg'],'color': colors["text2"]}
             )
             )
@@ -122,17 +121,22 @@ app.layout=dbc.Container(children=[
 
 ],fluid=True,style={'background-color': colors['bg'],'overflow': 'auto','height':'100vh'})
 @callback(
-    Output(component_id='graph',component_property='figure'),
+    Output(component_id="graph", component_property='figure', allow_duplicate=True),
     Input(component_id='dropdown',component_property='value'),
-    Input(component_id='change_graph_button',component_property='n_clicks')
+    Input(component_id='change_graph_button',component_property='n_clicks'),
+    prevent_initial_call=True
 )
-
 def update_graph(company_choosen : str,n):
+    print("xccc")
     if company_choosen == None:
         return px.line(template= 'plotly_dark')
 
     cg = ChangeGraphs(df_tickers)
     company_fetched = market_object.get_company(company_choosen.split("-")[0])
+
+    if company_fetched.empty:
+        return px.line(template= 'plotly_dark')
+
     textSplited = company_choosen.split("-")
     companyName = f"<br>{textSplited[0]} - ({textSplited[1].strip()})"
     global c
@@ -145,8 +149,57 @@ def update_graph(company_choosen : str,n):
             font_family='Courier New',
             font_size=13,
             title_font_family="Times New Roman",
-            title_font_size=20
+            title_font_size=20,
+            xaxis=dict(
+                rangeselector=dict(
+                    buttons=list([
+                        dict(count=1,
+                            label="1d",
+                            step="day",
+                            stepmode="backward"),
+                        dict(count=7,
+                            label="1w",
+                            step="day",
+                            stepmode="backward"),
+                        dict(count=1,
+                            label="1m",
+                            step="month",
+                            stepmode="backward"),
+                        dict(count=3,
+                            label="3m",
+                            step="month",
+                            stepmode="backward"),
+                        dict(count=6,
+                            label="6m",
+                            step="month",
+                            stepmode="backward"),
+                        dict(count=1,
+                            label="1y",
+                            step="year",
+                            stepmode="backward"),
+                        dict(count=3,
+                            label="3y",
+                            step="year",
+                            stepmode="backward"),
+                        dict(step="all")
+                    ]),
+                    y=-0.25,
+                    x=1,
+                    yanchor = "auto",
+                    xanchor="auto",
+                    borderwidth=1,
+                    font=dict(
+                        color="red",
+                        size=20
+                    )
+                ),
+                rangeslider=dict(
+                    visible=False
+                ),
+                type="date"
+            ),
         )
+        figure.update_yaxes()
         return figure
     elif c==1:
         figure = cg.changeGraphToBox(company_fetched, companyName)
@@ -161,14 +214,54 @@ def update_graph(company_choosen : str,n):
     Input(component_id='correlation2_dropdown',component_property='value')
 )
 def getCorrelationGrap(company1,company2):
+
+    if company1 == None or company2 == None:
+        return px.scatter(template= 'plotly_dark')
+
     company_fetched1 = market_object.get_company(company1.split("-")[0])
     textSplited1 = company1.split("-")
     company_fetched2 = market_object.get_company(company2.split("-")[0])      
-    textSplited2 = company2.split("-")                                     
+    textSplited2 = company2.split("-")  
+
+    if company_fetched1.empty or company_fetched2.empty:
+        return px.scatter(template= 'plotly_dark')
+
     corrg = CorrelationGraph(df_tickers)
     fig = corrg.handleCorrelation(company_fetched1,company_fetched2,textSplited1,textSplited2)
     return fig
+
+@app.callback(
+    Output(component_id = "graph", component_property="figure",),
+    Input(component_id= "graph", component_property="relayoutData"),
+    State(component_id="graph",component_property= "figure"),
+    Input(component_id='dropdown',component_property='value'),
+)
+def update_figure(relayout_data, fig, company_choosen):
+    if company_choosen == None:
+        return px.line(template= 'plotly_dark')
+
+    company_fetched = market_object.get_company(company_choosen.split("-")[0])
+
+    if company_fetched.empty:
+        raise PreventUpdate
+
+    if (relayout_data is None) or ("xaxis.range[0]" not in relayout_data):
+        fig["layout"]["yaxis"]["autorange"] = True
+        return fig
     
+    mask = (company_fetched['Date'] >= pd.Timestamp(relayout_data["xaxis.range[0]"])) & (company_fetched['Date'] <= pd.Timestamp(relayout_data["xaxis.range[1]"]))
+
+    in_view = company_fetched.loc[mask]
+
+    difference = (in_view.max()["Close"] - in_view.min()["Close"]) / 5
+    
+    fig["layout"]["yaxis"]["autorange"] = False
+    fig["layout"]["yaxis"]["range"] = [
+        in_view.min()["Close"],
+        in_view.max()["Close"] + difference,
+    ]
+
+    return fig
 
 if __name__ == '__main__':
     app.run(debug=True)
