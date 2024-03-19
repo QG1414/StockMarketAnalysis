@@ -127,7 +127,6 @@ app.layout=dbc.Container(children=[
     prevent_initial_call=True
 )
 def update_graph(company_choosen : str,n):
-    print("xccc")
     if company_choosen == None:
         return px.line(template= 'plotly_dark')
 
@@ -143,71 +142,27 @@ def update_graph(company_choosen : str,n):
     if ctx.triggered_id=='change_graph_button': c = c+1
     if c>2:
         c=0
+        
     if c==0:
         figure= px.line(company_fetched,x='Date',y="Close",template= 'plotly_dark',title=f'Stock Market Prices{companyName}')
-        figure.update_layout(
+    elif c==1:
+        figure = cg.changeGraphToBox(company_fetched, companyName)
+    else:
+        figure = cg.changeGraphToHistogram(company_fetched,companyName)
+
+    figure.update_layout(
+            xaxis=None
+    )
+    
+    figure.update_layout(
             font_family='Courier New',
             font_size=13,
             title_font_family="Times New Roman",
             title_font_size=20,
-            xaxis=dict(
-                rangeselector=dict(
-                    buttons=list([
-                        dict(count=1,
-                            label="1d",
-                            step="day",
-                            stepmode="backward"),
-                        dict(count=7,
-                            label="1w",
-                            step="day",
-                            stepmode="backward"),
-                        dict(count=1,
-                            label="1m",
-                            step="month",
-                            stepmode="backward"),
-                        dict(count=3,
-                            label="3m",
-                            step="month",
-                            stepmode="backward"),
-                        dict(count=6,
-                            label="6m",
-                            step="month",
-                            stepmode="backward"),
-                        dict(count=1,
-                            label="1y",
-                            step="year",
-                            stepmode="backward"),
-                        dict(count=3,
-                            label="3y",
-                            step="year",
-                            stepmode="backward"),
-                        dict(step="all")
-                    ]),
-                    y=-0.25,
-                    x=1,
-                    yanchor = "auto",
-                    xanchor="auto",
-                    borderwidth=1,
-                    font=dict(
-                        color="white",
-                        size=20
-                    ),
-                    bgcolor="#322485"
-                ),
-                rangeslider=dict(
-                    visible=False
-                ),
-                type="date"
-            ),
-        )
-        figure.update_yaxes()
-        return figure
-    elif c==1:
-        figure = cg.changeGraphToBox(company_fetched, companyName)
-        return figure
-    elif c==2:
-        figure = cg.changeGraphToHistogram(company_fetched,companyName)
-        return figure
+            xaxis=cg.getRangeselectors()
+    )
+    
+    return figure
     
 @callback(
     Output(component_id='corr_graph',component_property='figure'),
@@ -238,6 +193,9 @@ def getCorrelationGrap(company1,company2):
     Input(component_id='dropdown',component_property='value'),
 )
 def update_figure(relayout_data, fig, company_choosen):
+    
+    global c
+    
     if company_choosen == None:
         return px.line(template= 'plotly_dark')
 
@@ -252,14 +210,33 @@ def update_figure(relayout_data, fig, company_choosen):
     
     mask = (company_fetched['Date'] >= pd.Timestamp(relayout_data["xaxis.range[0]"])) & (company_fetched['Date'] <= pd.Timestamp(relayout_data["xaxis.range[1]"]))
 
-    in_view = company_fetched.loc[mask]
+    in_view = pd.DataFrame()
 
-    difference = (in_view.max()["Close"] - in_view.min()["Close"]) / 5
+    if c==0:
+        in_view = company_fetched.loc[mask]
+        minValue = in_view.min()["Close"]
+        maxValue = in_view.max()["Close"]
+    elif c==1:
+        in_view = market_object.get_averages(company_fetched)
+        in_view = in_view[mask]
+        minValue = min(in_view.min()["Close"], in_view.min()["MA10"], in_view.min()["MA20"])
+        maxValue = max(in_view.max()["Close"], in_view.max()["MA10"], in_view.max()["MA20"])
+    else:
+        in_view = market_object.get_volatility(company_fetched)
+        in_view = in_view[mask]
+        minValue = in_view.min()["Volatility"]
+        maxValue = in_view.max()["Volatility"] 
+    
+    difference = (maxValue - minValue) / 5
+    maxValue += difference
+    minValue -= difference
+    if minValue < 0:
+        minValue = 0
     
     fig["layout"]["yaxis"]["autorange"] = False
     fig["layout"]["yaxis"]["range"] = [
-        in_view.min()["Close"],
-        in_view.max()["Close"] + difference,
+        minValue,
+        maxValue,
     ]
 
     return fig

@@ -66,3 +66,56 @@ class ChangeGraphs:
             title_font_size=20
         )
         return figure
+    
+    def getRangeselectors(self) -> dict:
+        dictionaryToReturn = dict(
+                rangeselector=dict(
+                    buttons=list([
+                        dict(count=1,
+                            label="1d",
+                            step="day",
+                            stepmode="backward"),
+                        dict(count=7,
+                            label="1w",
+                            step="day",
+                            stepmode="backward"),
+                        dict(count=1,
+                            label="1m",
+                            step="month",
+                            stepmode="backward"),
+                        dict(count=3,
+                            label="3m",
+                            step="month",
+                            stepmode="backward"),
+                        dict(count=6,
+                            label="6m",
+                            step="month",
+                            stepmode="backward"),
+                        dict(count=1,
+                            label="1y",
+                            step="year",
+                            stepmode="backward"),
+                        dict(count=3,
+                            label="3y",
+                            step="year",
+                            stepmode="backward"),
+                        dict(step="all")
+                    ]),
+                    y=-0.25,
+                    x=1,
+                    yanchor = "auto",
+                    xanchor="auto",
+                    borderwidth=1,
+                    font=dict(
+                        color="white",
+                        size=20
+                    ),
+                    bgcolor="#322485"
+                ),
+                rangeslider=dict(
+                    visible=False
+                ),
+                type="date"
+            )
+        
+        return dictionaryToReturn
