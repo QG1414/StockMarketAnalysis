@@ -5,7 +5,8 @@ from ChangeGraphs import ChangeGraphs
 from dataScripts.stockMarketVisualization import StockMarketData
 from correlationGraph import CorrelationGraph
 import plotly.io as pio
-
+import pandas as pd
+from datetime import datetime
 
 pio.templates.default = "plotly_dark"
 external_stylesheets = [dbc.themes.CERULEAN]
@@ -13,6 +14,11 @@ app=Dash(__name__, external_stylesheets=external_stylesheets)
 
 market_object = StockMarketData()
 df_tickers = market_object.get_tickets()
+
+lastTicket = ""
+current_company = None
+current_avarages = None
+current_volatility = None
 
 c=0
 colors ={
@@ -128,11 +134,26 @@ app.layout=dbc.Container(children=[
 )
 
 def update_graph(company_choosen : str,n):
+    global lastTicket
+    global current_company
+    global current_avarages
+    global current_volatility
+    
     if company_choosen == None:
         return px.line(template= 'plotly_dark')
 
     cg = ChangeGraphs(df_tickers)
-    company_fetched = market_object.get_company(company_choosen.split("-")[0])
+    
+    ticket = company_choosen.split("-")[0]
+
+    if ticket != lastTicket:
+        lastTicket = ticket
+        company_fetched = market_object.get_company(lastTicket)
+        current_company = company_fetched
+        current_avarages = market_object.get_averages(current_company)
+        current_volatility = market_object.get_volatility(current_company)
+
+    
     textSplited = company_choosen.split("-")
     companyName = f"<br>{textSplited[0]} - ({textSplited[1].strip()})"
     global c
@@ -140,7 +161,7 @@ def update_graph(company_choosen : str,n):
     if c>2:
         c=0
     if c==0:
-        figure= px.line(company_fetched,x='Date',y="Close",template= 'plotly_dark',title=f'Stock Market Prices{companyName}')
+        figure= px.line(current_company,x='Date',y="Close",template= 'plotly_dark',title=f'Stock Market Prices{companyName}')
         figure.update_layout(
             font_family='Courier New',
             font_size=13,
@@ -149,10 +170,10 @@ def update_graph(company_choosen : str,n):
         )
         return figure
     elif c==1:
-        figure = cg.changeGraphToBox(company_fetched, companyName)
+        figure = cg.changeGraphToBox(current_avarages, companyName)
         return figure
     elif c==2:
-        figure = cg.changeGraphToHistogram(company_fetched,companyName)
+        figure = cg.changeGraphToHistogram(current_volatility,companyName)
         return figure
     
 @callback(
@@ -161,9 +182,9 @@ def update_graph(company_choosen : str,n):
     Input(component_id='correlation2_dropdown',component_property='value')
 )
 def getCorrelationGrap(company1,company2):
-    company_fetched1 = market_object.get_company(company1.split("-")[0])
+    company_fetched1 = market_object.get_company(company1.split("-")[0], startDate=(datetime.now() - pd.DateOffset(years=1)))
     textSplited1 = company1.split("-")
-    company_fetched2 = market_object.get_company(company2.split("-")[0])      
+    company_fetched2 = market_object.get_company(company2.split("-")[0], startDate=(datetime.now() - pd.DateOffset(years=1)))      
     textSplited2 = company2.split("-")                                     
     corrg = CorrelationGraph(df_tickers)
     fig = corrg.handleCorrelation(company_fetched1,company_fetched2,textSplited1,textSplited2)
