@@ -2,6 +2,7 @@ import pandas as pd
 import yfinance as yf
 import os
 from absolutePathGenerator import AbsolutePath
+import datetime
 
 
 class StockMarketData:
@@ -13,6 +14,7 @@ class StockMarketData:
             self.__create_tickets_file()
             
         self.__tickers_data = pd.read_csv(self.__tickets_file_name)
+        self.__tickers_data["Symbol"] = self.__tickers_data["Symbol"].astype(str)
 
     def __create_tickets_file(self) -> None:
         screener_data = pd.read_csv(self.__base_data_name)
@@ -36,14 +38,16 @@ class StockMarketData:
     def get_tickets(self) -> pd.DataFrame:
         return self.__tickers_data
     
-    def get_company(self, ticket:str) -> pd.DataFrame:
-        print(ticket)
+    def get_company(self, ticket:str, startDate = None, endDate=datetime.datetime.now()) -> pd.DataFrame:
         try:
-            company_data = pd.DataFrame(yf.download(ticket))
+            if startDate == None:
+                company_data = yf.download(tickers=ticket, threads=(True,20))
+            else:
+                company_data = yf.download(tickers=ticket, threads=(True,20), start=startDate, end=endDate)
             company_data.reset_index(inplace=True)
-            return company_data
         except:
             return pd.DataFrame()
+        return company_data
     
     @staticmethod
     def get_averages(companyData:pd.DataFrame) -> pd.DataFrame:
