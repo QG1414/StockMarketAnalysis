@@ -17,7 +17,7 @@ market_object = StockMarketData()
 df_tickers = market_object.get_tickets()
 
 lastTicket = ""
-current_company = None
+current_company = pd.DataFrame()
 current_avarages = None
 current_volatility = None
 
@@ -147,7 +147,7 @@ def update_graph(company_choosen : str,n):
     if ticket != lastTicket:
         lastTicket = ticket
         company_fetched = market_object.get_company(lastTicket)
-        if current_company.empty:
+        if company_fetched.empty:
             lastTicket = ""
             return px.line(template= 'plotly_dark')
         current_company = company_fetched
@@ -163,17 +163,14 @@ def update_graph(company_choosen : str,n):
         
     if c==0:
         figure= px.line(current_company,x='Date',y="Close",template= 'plotly_dark',title=f'Stock Market Prices{companyName}')
-        figure.update_layout(
-            font_family='Courier New',
-            font_size=13,
-            title_font_family="Times New Roman",
-            title_font_size=20
-        )
-        return figure
     elif c==1:
         figure = cg.changeGraphToBox(current_avarages, companyName)
     else:
         figure = cg.changeGraphToHistogram(current_volatility,companyName)
+    
+    figure.update_layout(
+            xaxis=None
+    )
     
     figure.update_layout(
             font_family='Courier New',
@@ -213,36 +210,36 @@ def getCorrelationGrap(company1,company2):
     Input(component_id='dropdown',component_property='value'),
 )
 def update_figure(relayout_data, fig, company_choosen):
-    
+    global current_company
+    global current_avarages
+    global current_volatility
     global c
     
     if company_choosen == None:
         return px.line(template= 'plotly_dark')
 
-    company_fetched = market_object.get_company(company_choosen.split("-")[0])
-
-    if company_fetched.empty:
+    if current_company.empty:
         raise PreventUpdate
 
     if (relayout_data is None) or ("xaxis.range[0]" not in relayout_data):
         fig["layout"]["yaxis"]["autorange"] = True
         return fig
     
-    mask = (company_fetched['Date'] >= pd.Timestamp(relayout_data["xaxis.range[0]"])) & (company_fetched['Date'] <= pd.Timestamp(relayout_data["xaxis.range[1]"]))
+    mask = (current_company['Date'] >= pd.Timestamp(relayout_data["xaxis.range[0]"])) & (current_company['Date'] <= pd.Timestamp(relayout_data["xaxis.range[1]"]))
 
     in_view = pd.DataFrame()
 
     if c==0:
-        in_view = company_fetched.loc[mask]
+        in_view = current_company.loc[mask]
         minValue = in_view.min()["Close"]
         maxValue = in_view.max()["Close"]
     elif c==1:
-        in_view = market_object.get_averages(company_fetched)
+        in_view = market_object.get_averages(current_company)
         in_view = in_view[mask]
         minValue = min(in_view.min()["Close"], in_view.min()["MA10"], in_view.min()["MA20"])
         maxValue = max(in_view.max()["Close"], in_view.max()["MA10"], in_view.max()["MA20"])
     else:
-        in_view = market_object.get_volatility(company_fetched)
+        in_view = market_object.get_volatility(current_company)
         in_view = in_view[mask]
         minValue = in_view.min()["Volatility"]
         maxValue = in_view.max()["Volatility"] 
