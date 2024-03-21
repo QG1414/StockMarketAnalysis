@@ -1,71 +1,25 @@
 import plotly_express as px
 from dataScripts.stockMarketVisualization import StockMarketData
+import pandas as pd
+
 class ChangeGraphs:
-    def __init__(self, df):
-        self.df = df
-    def changeGraphToBox(self, col_chosen, fullName : str):
-        figure= px.line(col_chosen,x='Date',y=["Close","MA10","MA20"],template= 'plotly_dark',title=f'Moving Averages{fullName}')
-        figure.update_layout(
-            font_family='Courier New',
-            font_size=13,
-            title_font_family="Times New Roman",
-            title_font_size=20,
-            xaxis=dict(
-                rangeselector=dict(
-                    buttons=list([
-                        dict(count=1,
-                            label="1d",
-                            step="day",
-                            stepmode="backward"),
-                        dict(count=7,
-                            label="1w",
-                            step="day",
-                            stepmode="backward"),
-                        dict(count=1,
-                            label="1m",
-                            step="month",
-                            stepmode="backward"),
-                        dict(count=3,
-                            label="3m",
-                            step="month",
-                            stepmode="backward"),
-                        dict(count=6,
-                            label="6m",
-                            step="month",
-                            stepmode="backward"),
-                        dict(count=1,
-                            label="YTD",
-                            step="year",
-                            stepmode="backward"),
-                        dict(count=1,
-                            label="1y",
-                            step="year",
-                            stepmode="backward"),
-                        dict(count=3,
-                            label="3y",
-                            step="year",
-                            stepmode="backward"),
-                        dict(step="all")
-                    ])
-                ),
-                rangeslider=dict(
-                    visible=False
-                ),
-                type="date"
-            )
-        )
-        return figure
-    def changeGraphToHistogram(self, col_chosen,fullName : str):
-        figure= px.line(col_chosen,x="Date",y="Volatility",template= 'plotly_dark',title=f'Volatility{fullName}')
-        figure.update_layout(
-            font_family='Courier New',
-            font_size=13,
-            title_font_family="Times New Roman",
-            title_font_size=20
-        )
+    @staticmethod
+    def get_price_chart(current_company:pd.DataFrame,fullName : str):
+        figure= px.line(current_company,x='Date',y="Close",template= 'plotly_dark',title=f'Stock Market Prices{fullName}')
         return figure
     
-    def getRangeselectors(self) -> dict:
+    @staticmethod
+    def get_avarages_chart(current_company:pd.DataFrame, fullName : str):
+        figure= px.line(current_company,x='Date',y=["Close","MA10","MA20"],template= 'plotly_dark',title=f'Moving Avarages{fullName}')
+        return figure
+    
+    @staticmethod
+    def get_volatility_chart(current_company:pd.DataFrame,fullName : str):
+        figure= px.line(current_company,x="Date",y="Volatility",template= 'plotly_dark',title=f'Volatility{fullName}')
+        return figure
+    
+    @staticmethod
+    def getRangeselectors() -> dict:
         dictionaryToReturn = dict(
                 rangeselector=dict(
                     buttons=list([
@@ -96,7 +50,8 @@ class ChangeGraphs:
                         dict(count=3,
                             label="3y",
                             step="year",
-                            stepmode="backward"),
+                            stepmode="backward"
+                            ),
                         dict(step="all")
                     ]),
                     y=-0.25,
