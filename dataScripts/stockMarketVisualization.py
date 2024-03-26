@@ -38,12 +38,13 @@ class StockMarketData:
     def get_tickets(self) -> pd.DataFrame:
         return self.__tickers_data
     
-    def get_company(self, ticket:str, startDate = None, endDate=datetime.datetime.now()) -> pd.DataFrame:
+    @staticmethod
+    def get_company(ticket:str, startDate = None, endDate=datetime.datetime.now()) -> pd.DataFrame:
         try:
             if startDate == None:
-                company_data = yf.download(tickers=ticket, threads=(True,20))
+                company_data = yf.download(tickers=ticket, threads=True)
             else:
-                company_data = yf.download(tickers=ticket, threads=(True,20), start=startDate, end=endDate)
+                company_data = yf.download(tickers=ticket, threads=True, start=startDate, end=endDate)
             company_data.reset_index(inplace=True)
         except:
             return pd.DataFrame()
