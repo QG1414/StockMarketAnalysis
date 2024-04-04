@@ -18,21 +18,39 @@ class Layout:
         content_layout = dbc.Container(children=[
             dbc.Row([
                 html.Div(
-                children='Data Stock Analysis📊',
+                    children=[
+                    html.P(
+                        children='Data Stock Analysis',
+                        className="font-weight-bold text-center",
+                        style={
+                            'color': self.colors['text'],
+                            'display': 'inline-block'
+                            # 'background-color': self.colors['bg']
+                        },
+                    ),
+                    html.Img(
+                        src="https://drive.google.com/thumbnail?id=" + "https://drive.google.com/file/d/1vtkE87R6gG-RCqaUnK5WeKLSYusAlAme/view?usp=sharing".split('/')[-2],
+                        className="img-fluid",
+                        style={
+                            "width":"7%",
+                            'display': 'inline-block'
+                        }
+                    )
+                ],
                 className="font-weight-bold text-center display-2 p-3",
                 style={
-                    'color': self.colors['text'],
-                    'background-color': self.colors['bg']
+                    'background-image': 'linear-gradient(#152559 1%, #111111 49%)'
                 }
-                    )
-            ]),
-            dbc.Row([
-                html.Hr(
-                    style={
-                        'color': self.colors['text']
-                    }
+
                 )
             ]),
+            # dbc.Row([
+            #     html.Hr(
+            #         style={
+            #             'color': self.colors['text']
+            #         }
+            #     )
+            # ]),
             dbc.Row([
                     dcc.Dropdown(
                         self.df_tickers["Symbol"] + " - " + self.df_tickers["FullName"],
@@ -96,15 +114,17 @@ class Layout:
                     dcc.Graph( id='corr_graph',figure={"layout":{
                         "template":"plotly_dark"
                     }})
-                ]),
+                ]
+                ),
                 dbc.Row(
                     dbc.Col(
-                    html.P(
-                        f"\u00A9 All rights reserved. Made by Kacper Potaczała and Łukasz Cal.",
-                        className="text-end text-white pt-3",
-                    ),
-                    width={"size": 12},
-                    style={"background-color": "#2E3135"}
+                        html.P(
+                            f"\u00A9 All rights reserved. Made by Kacper Potaczała and Łukasz Cal.",
+                            className="text-end text-white pt-3",
+                        ),
+                        width={"size": 12},
+                        # style={"background-color": "#2E3135"}
+                        style={'background-image': 'linear-gradient(#111111, #152559)'}
                     )
                 )
 
