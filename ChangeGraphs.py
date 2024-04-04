@@ -9,16 +9,13 @@ class ChangeGraphs:
     def get_price_chart(current_company:pd.DataFrame,fullName : str):   
         figure = go.Figure()
 
-        cg = ChangeGraphs()
-        buyline, sellline = cg.linesBuySell(current_company['Close'])  # Pass 'Close' column to the function
-        print(len(buyline), len(sellline))
+        buyline, sellline = ChangeGraphs.linesBuySell(current_company['Close'])  # Pass 'Close' column to the function
         
-        figure.add_trace(go.Scatter(x=current_company['Date'], y=buyline, mode='lines', line=dict(shape='hv', smoothing=1.3, color='red'),name='Buy Signal'))
-        figure.add_trace(go.Scatter(x=current_company['Date'], y=sellline, mode='lines', line=dict(shape='hv', smoothing=1.3, color='green'),name='Sell Signal'))
+        figure.add_trace(go.Scatter(x=current_company['Date'], y=buyline, mode='lines', line=dict(shape='spline', smoothing=0.1, color='red'),name='Buy Signal'))
+        figure.add_trace(go.Scatter(x=current_company['Date'], y=sellline, mode='lines', line=dict(shape='spline', smoothing=0.1, color='green'),name='Sell Signal'))
 
         # Update layout
         figure.update_layout(template='plotly_dark', title=f'Stock Market Prices {fullName}', xaxis_title='Date', yaxis_title='Close Price')
-
 
         return figure
     
@@ -87,9 +84,8 @@ class ChangeGraphs:
             )
         
         return dictionaryToReturn
+    
     @staticmethod
-    
-    
     def linesBuySell(source):
         buyline = []
         sellline = []
@@ -116,16 +112,29 @@ class ChangeGraphs:
                     isBuy = False
 
             if not isBuy and not isSell:
-                buyline.insert(0, np.nan)
-                sellline.insert(0, source.iloc[i])
+                if(buyline[0] is not np.nan):
+                    buyline.insert(0, source.iloc[i])
+                else:
+                    buyline.insert(0, np.nan)
+
+                if sellline[0] is not np.nan:
+                    sellline.insert(0, source.iloc[i])
+                else:
+                    sellline.insert(0,np.nan)
 
             if isBuy and not isSell:
                 buyline.insert(0, source.iloc[i])
-                sellline.insert(0, np.nan)
+                if buyline[1] is not np.nan:
+                    sellline.insert(0, np.nan)
+                else:
+                    sellline.insert(0, source.iloc[i])
 
             if isSell and not isBuy:
                 sellline.insert(0, source.iloc[i])
-                buyline.insert(0, np.nan)
+                if sellline[1] is not np.nan:
+                    buyline.insert(0, np.nan)
+                else:
+                    buyline.insert(0, source.iloc[i])
 
         return buyline, sellline
 
