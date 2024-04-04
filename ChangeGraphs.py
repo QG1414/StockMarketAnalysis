@@ -1,16 +1,31 @@
+import plotly.graph_objects as go
 import plotly_express as px
 from dataScripts.stockMarketVisualization import StockMarketData
 import pandas as pd
+import numpy as np
 
 class ChangeGraphs:
     @staticmethod
-    def get_price_chart(current_company:pd.DataFrame,fullName : str):
-        figure= px.line(current_company,x='Date',y="Close",template= 'plotly_dark',title=f'Stock Market Prices{fullName}')
+    def get_price_chart(current_company:pd.DataFrame,fullName : str):   
+        figure = go.Figure()
+
+        cg = ChangeGraphs()
+        buyline, sellline = cg.linesBuySell(current_company['Close'])  # Pass 'Close' column to the function
+        print(len(buyline), len(sellline))
+        
+        figure.add_trace(go.Scatter(x=current_company['Date'], y=buyline, mode='lines', line=dict(shape='hv', smoothing=1.3, color='red'),name='Buy Signal'))
+        figure.add_trace(go.Scatter(x=current_company['Date'], y=sellline, mode='lines', line=dict(shape='hv', smoothing=1.3, color='green'),name='Sell Signal'))
+
+        # Update layout
+        figure.update_layout(template='plotly_dark', title=f'Stock Market Prices {fullName}', xaxis_title='Date', yaxis_title='Close Price')
+
+
         return figure
     
     @staticmethod
     def get_avarages_chart(current_company:pd.DataFrame, fullName : str):
         figure= px.line(current_company,x='Date',y=["Close","MA10","MA20"],template= 'plotly_dark',title=f'Moving Avarages{fullName}')
+
         return figure
     
     @staticmethod
@@ -72,3 +87,47 @@ class ChangeGraphs:
             )
         
         return dictionaryToReturn
+    @staticmethod
+    
+    
+    def linesBuySell(source):
+        buyline = []
+        sellline = []
+        isBuy = False
+        isSell = False
+        start = len(source) - 3
+
+        if source.iloc[start + 1] > source.iloc[start + 2]:
+            buyline = source.iloc[-2:].tolist()
+            sellline = [np.nan, np.nan]
+        else:
+            sellline = source.iloc[-2:].tolist()
+            buyline = [np.nan, np.nan]
+
+        for i in range(start, -1, -1):
+            if not isBuy:
+                isBuy = (source.iloc[i] > source.iloc[i + 1]) and (source.iloc[i + 1] < source.iloc[i + 2])
+                if isBuy:
+                    isSell = False
+
+            if not isSell:
+                isSell = (source.iloc[i] < source.iloc[i + 1]) and (source.iloc[i + 1] > source.iloc[i + 2])
+                if isSell:
+                    isBuy = False
+
+            if not isBuy and not isSell:
+                buyline.insert(0, np.nan)
+                sellline.insert(0, source.iloc[i])
+
+            if isBuy and not isSell:
+                buyline.insert(0, source.iloc[i])
+                sellline.insert(0, np.nan)
+
+            if isSell and not isBuy:
+                sellline.insert(0, source.iloc[i])
+                buyline.insert(0, np.nan)
+
+        return buyline, sellline
+
+                                        
+                                
