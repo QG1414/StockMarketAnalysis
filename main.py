@@ -26,7 +26,7 @@ class MainApp:
 
 
     def run_app(self) -> None:
-        self.__app.run(debug=True)
+        self.__app.run()
 
     def __on_page_reload(self):
         self.__callbacks.reset_values()
