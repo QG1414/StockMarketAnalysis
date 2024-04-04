@@ -8,10 +8,13 @@ from callbacks import Callbacks
 pio.templates.default = "plotly_dark"
 external_stylesheets = [dbc.themes.CERULEAN]
 
-class MainApp:
-    def __init__(self) -> None:
-        self.__app=Dash(__name__, external_stylesheets=external_stylesheets)
+__app=Dash(__name__, external_stylesheets=external_stylesheets)
+server = __app.server
 
+class MainApp:
+    def __init__(self, app) -> None:
+
+        self.__app = app
         self.__market_object = StockMarketData()
         self.__df_tickers = self.__market_object.get_tickets()
         self.__layout_data = Layout(self.__df_tickers)
@@ -30,7 +33,7 @@ class MainApp:
         return self.__layout_data.content_layout
 
 
-app = MainApp()
+app = MainApp(__app)
 
 if __name__ == '__main__':
     app.run_app()
