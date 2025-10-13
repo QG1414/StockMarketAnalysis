@@ -1,1 +1,1 @@
-https://stock-market-analysis.onrender.com
+inactive <s>https://stock-market-analysis.onrender.com</s>
